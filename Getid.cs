@@ -11,13 +11,15 @@ while true
     then
         0AD1: show_formatted_text "Type: /getid [PlayerName]" time 3000
         wait 3000
-        0AD4: 1@ = scan_string "%s"        0AD2: 0@ = get_label_pointer @InputName
-        0AD3: 1@ = format "getid %s"
+        0AD4: 1@ = scan_string "%s"  // ← هنا ينقص التقاط الاسم
+        0AD2: 0@ = get_label_pointer @InputName
+        0AD3: 1@ = format "getid %s"  // نجهزو الأمر
         0B6B: samp cmd_ret = register_client_command "getid" @FindID
     end
 end
 
 :FindID
+// تقليب اللاعبين
 0AD4: 31@ = scan_string "%s"
 for 2@ = 0 to 999
     if 0A8C: 3@ = allocate_memory_size 260
@@ -38,3 +40,4 @@ end
 :FreeMem
 0A8D: free_memory 0@
 0AB2: ret 0
+
