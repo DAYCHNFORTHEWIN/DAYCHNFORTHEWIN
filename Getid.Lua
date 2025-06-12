@@ -1,23 +1,29 @@
-local samp = require 'samp.events'
-
-function getPlayerIdByName(name)
-    for i = 0, 1000 do
-        local playerName = samp.getPlayerName(i)
-        if playerName and playerName:lower() == name:lower() then
-            return i
-        end
-    end
-    return -1
-end
+local sampev = require 'samp.events'
+local sampfuncs = require 'sampfuncs'
 
 function main()
-    while true do
-        local id = getPlayerIdByName("playerNameHere")
-        if id ~= -1 then
-            print(("ID for player is %d"):format(id))
-        else
-            print("Player not found.")
+    while not isSampAvailable() do wait(100) end
+
+    sampRegisterChatCommand("getid", function(args)
+        local playerName = args
+        if playerName == "" then
+            sampAddChatMessage("Usage: /getid [playername]", 0xFFFF0000)
+            return
         end
-        wait(5000)
-    end
+
+        local playerId = -1
+        for i = 0, 1000 do
+            local name = sampGetPlayerNickname(i)
+            if name and name:lower() == playerName:lower() then
+                playerId = i
+                break
+            end
+        end
+
+        if playerId == -1 then
+            sampAddChatMessage("Player not found!", 0xFFFF0000)
+        else
+            sampAddChatMessage(("Player %s has ID: %d"):format(playerName, playerId), 0xFF00FF00)
+        end
+    end)
 end
