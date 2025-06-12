@@ -1,43 +1,58 @@
-{$CLEO}
-0000:
+local sampev = require 'lib.samp.events'
+local memory = require 'memory'
+local inicfg = require 'inicfg'
+local encoding = require 'encoding'
+encoding.default = 'CP1251'
+local u8 = encoding.UTF8
 
-repeat
-    wait 0
-until 0AFA: is_samp_available
+local isAdmin = false -- لازم تحدد متى اللاعب admin (ممكن عن طريق امر او check حساب)
 
-while true
-    wait 0
-    if 0ADC: test_cheat "GETID"
-    then
-        0AD1: show_formatted_text "Type: /getid [PlayerName]" time 3000
-        wait 3000
-        0AD4: 1@ = scan_string "%s"  // ← هنا ينقص التقاط الاسم
-        0AD2: 0@ = get_label_pointer @InputName
-        0AD3: 1@ = format "getid %s"  // نجهزو الأمر
-        0B6B: samp cmd_ret = register_client_command "getid" @FindID
-    end
-end
-
-:FindID
-// تقليب اللاعبين
-0AD4: 31@ = scan_string "%s"
-for 2@ = 0 to 999
-    if 0A8C: 3@ = allocate_memory_size 260
-    then
-        0B36: samp 3@ = get_player_nickname 2@
-        if 0C29: strcmp string1 3@ string2 31@
-        then
-            0AF8: "Player %s has ID: %d" 31@ 2@
-            0AB1: call_scm_func @FreeMem 1 3@
-            0AB2: ret 1
+-- استدعاء امر getid
+function onChatCommand(cmd)
+    local args = {}
+    for word in cmd:gmatch("%S+") do table.insert(args, word) end
+    if args[1] == "getid" and args[2] then
+        if not isAdmin then
+            sampAddChatMessage("{FF0000}انت مش أدمن!", -1)
+            return true
         end
-        0AB1: call_scm_func @FreeMem 1 3@
+
+        local playerName = args[2]
+        sampSendChat("/id " .. playerName)
+        return true
+    end
+    return false
+end
+
+-- رصد الرد على /id
+function onChatMessage(color, text)
+    -- مثال الرد: "[SERVER]: Player Ahmed has ID 12."
+    -- لازم تضبطها حسب رد السيرفر عندك
+    if text:find("has ID") then
+        -- نبحث على ID داخل النص
+        local id = text:match("ID (%d+)")
+        if id then
+            sampAddChatMessage("{00FF00}ID اللاعب هو: " .. id, -1)
+        end
+        return true
+    end
+    return false
+end
+
+function main()
+    -- هنا تعيين isAdmin على حسب حالتك (ممكن تركبها بناء على nick، او check rank...)
+    isAdmin = true -- فقط لتجربة
+
+    while not isSampAvailable() do wait(100) end
+    sampAddChatMessage("{00FFFF}GetID script loaded! اكتب /getid اسم_اللاعب", -1)
+
+    while true do
+        wait(0)
+        sampProcessChatCommand("getid", onChatCommand)
     end
 end
-0AF8: "Player %s not found." 31@
-0AB2: ret 1
 
-:FreeMem
-0A8D: free_memory 0@
-0AB2: ret 0
-
+-- تعاريف حدث الشات
+function sampev.onChatMessage(color, text)
+    return onChatMessage(color, text)
+end
