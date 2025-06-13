@@ -1,43 +1,24 @@
-script_name("Spec Detector + Danger Alarm")
-script_author("ChatGPT")
+local moonloader = require('moonloader')
+local sampfuncs = require('sampfuncs')
 
-require 'sampfuncs'
-require 'samp.events'
-
-local spectatingPlayers = {}
-local detectionRange = 50.0 -- meters
+local soundPath = 'spec_alert.mp3' -- لازم تحط ملف الصوت بنفس الاسم
 
 function main()
-    repeat wait(100) until isSampAvailable() and isSampLoaded()
-
-    sampAddChatMessage("{FF4444}[ALERT] Spec Detector with Danger Sound Loaded!", 0xFF4444)
+    if not isSampfuncsLoaded() then
+        sampAddChatMessage('sampfuncs not loaded.', 0xFF0000)
+        return
+    end
 
     while true do
         wait(1000)
-        local myChar = PLAYER_PED
-        local myX, myY, myZ = getCharCoordinates(myChar)
-
-        for i = 0, sampGetMaxPlayerId() do
-            if sampIsPlayerConnected(i) and not sampIsPlayerNpc(i) then
-                local isStreamed, playerPed = sampGetCharHandleBySampPlayerId(i)
-                if isStreamed and playerPed ~= 0 then
-                    local x, y, z = getCharCoordinates(playerPed)
-                    local dist = getDistanceBetweenCoords3d(myX, myY, myZ, x, y, z)
-
-                    if dist <= detectionRange and not isCharInAnyCar(playerPed) then
-                        if isCharStopped(playerPed) and not isCharOnScreen(playerPed) then
-                            local name = sampGetPlayerNickname(i)
-                            if not spectatingPlayers[i] then
-                                spectatingPlayers[i] = true
-                                sampAddChatMessage(string.format("{FF0000}[SPEC ALERT]{FFFFFF} Player may be specting you: %s (ID %d)", name, i), 0xFF0000)
-                                playSound("C:\\Windows\\Media\\spec_alert.wav") -- استبدل المسار إذا لازم
-                            end
-                        end
-                    else
-                        spectatingPlayers[i] = nil
-                    end
-                end
+        if sampIsPlayerSpectating() then
+            sampAddChatMessage('{FF0000}⚠ شخص قاعد يعمللك spectate ⚠', 0xFF0000)
+            if doesFileExist(soundPath) then
+                playSound(soundPath)
+            else
+                sampAddChatMessage('{FF0000}⚠ الصوت spec_alert.mp3 مفقود!', 0xFF0000)
             end
+            wait(10000)
         end
     end
 end
